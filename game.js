@@ -8,19 +8,26 @@
 	var PLAYGROUND_HEIGHT = 400;
 	var PLAYER_WIDTH = 40;
 	var PLAYER_HEIGHT = 50;
+	var PIE_WIDTH = 50;
+	var PIE_HEIGHT = 50;
 	var PLAYER_INITIAL_OFFSET = 50;
 	var PLAYER_MARGIN_BASELINE = 5;
 	var PLAYER_MARGIN_CENTER = 20;
 	var PLAYER_MARGIN_SIDELINES = 5;
 	var PLAYER_SPEED_X = 4;
 	var PLAYER_SPEED_Y = 4;
+	var PIE_SPEED_X = 10;
 	var REFRESH_RATE = 15;
+	var FIRE_RATE = 250;
 
 	var p1_ai = false, p2_ai = false;
 	var player1, player2;
 	var p1anim, p2anim;
+	var pieAnim;
 	var pies;
+	var pieCounter;
 	var background;
+	var currentGameTime;
 
 	// Bounds that player is allowed to move within (x1, y1, x2, y2)
 	var p1_bounds = [
@@ -34,6 +41,12 @@
 		p1_bounds[1],
 		PLAYGROUND_WIDTH - PLAYER_WIDTH - PLAYER_MARGIN_BASELINE,
 		p1_bounds[3]
+	];
+	var pie_bounds = [
+		-PIE_WIDTH,
+		-PIE_HEIGHT,
+		PLAYGROUND_WIDTH,
+		PLAYGROUND_HEIGHT
 	];
 
 	function animationsForPlayer(playerName) {
@@ -54,6 +67,22 @@
 		return a;
 	}
 
+	function animationsForPie() {
+		var ANIM_RATE = 30;
+		var a = new Array();
+		var animInfo = {
+			imageURL: "img/flying_pie_left.png",
+			numberOfFrame: 3,
+			delta: 50,
+			rate: ANIM_RATE,
+			type: $.gameQuery.ANIMATION_VERTICAL
+		};
+		a[1] = new $.gameQuery.Animation(animInfo);
+		animInfo.imageURL = "img/flying_pie_right.png";
+		a[2] = new $.gameQuery.Animation(animInfo);
+		return a;
+	}
+
 	function init() {
 		background = new $.gameQuery.Animation({imageURL: "background.png"});
 
@@ -64,6 +93,7 @@
 
 		p1anim = animationsForPlayer("romney");
 		p2anim = animationsForPlayer("obama");
+		pieAnim = animationsForPie();
 
 		// Initialize game
 		$("#playground").playground({width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT, keyTracker: true});
@@ -83,31 +113,71 @@
 
 		// Add players
 		player1 = new Player($('#player1'));
+		player1.team = 1;
 		$('#player1')[0].player = player1;
 		player2 = new Player($('#player2'));
+		player2.team = 2;
 		$('#player2')[0].player = player2;
 
 		// Game loop
 		$.playground().registerCallback(gameTick, REFRESH_RATE);
 		console.log("defined game loop");
+
+		// Initialize other game state
+		// Pies for team1 and team2
+		pies = new Array();
+		pies[1] = new Array();
+		pies[2] = new Array();
+		pieCounter = 0;
 	}
 
 	function Player(node) {
 		this.node = $(node);
+		this.lastFired = 0;
+		this.team = 1;
+		return true;
+	}
+
+	function Pie(node) {
+		this.node = $(node);
+		this.team = 1;
+		this.fired = currentGameTime;
+		this.speed = PIE_SPEED_X;
 		return true;
 	}
 
 	function gameTick() {
 
+		currentGameTime = new Date().getTime();
+
 		// Input player directions
 		p1_dir = p1_ai ? [0, 0] : translateKeysToDirection(["A", "S", "D", "W"]);
 		p2_dir = p2_ai ? [0, 0] : translateKeysToDirection(["J", "K", "L", "I"]);
 
+		// Input firing
+		p1_fire = p1_ai ? false : keyIsDown("F");
+		p2_fire = p2_ai ? false : keyIsDown("H");
+
 		// Update player positions
-		updatePlayerPosition($('#player1'), p1_dir, p1_bounds);
-		updatePlayerPosition($('#player2'), p2_dir, p2_bounds);
+		updateActorPosition($('#player1'), p1_dir, p1_bounds, PLAYER_SPEED_X, PLAYER_SPEED_Y);
+		updateActorPosition($('#player2'), p2_dir, p2_bounds, PLAYER_SPEED_X, PLAYER_SPEED_Y);
+
+		// Attempt to fire
+		if (p1_fire) fire($('#player1'));
+		if (p2_fire) fire($('#player2'));
 
 		// Update projectile positions
+		for (var teamId = 1; teamId <= 2; teamId++) {
+			var dir = [teamId == 1 ? 1 : -1, 0];
+			for (var pieNum in pies[teamId]) {
+				var inBounds = updateActorPosition(pies[teamId][pieNum].node, dir, pie_bounds, PIE_SPEED_X, 0);
+				if (!inBounds) {
+					// Remove object (leaves hole in array, but that's OK)
+					pies[teamId][pieNum].node.remove();
+					delete pies[teamId][pieNum];
+				}
+			}
+		}
 
 		// Collision detection
 	}
@@ -134,23 +204,73 @@
 		return $.gameQuery.keyTracker[char.charCodeAt(0)];
 	}
 
-	function updatePlayerPosition(node, dir, bounds) {
+	function updateActorPosition(node, dir, bounds, speedX, speedY) {
 		var x = parseInt(node.css("left"));
 		var y = parseInt(node.css("top"));
+		var oldX = x, oldY = y;
+
 		if (dir[0] != 0) {
-			x += dir[0] * PLAYER_SPEED_X;
+			x += dir[0] * speedX;
 		}
 		if (dir[1] != 0) {
-			y += dir[1] * PLAYER_SPEED_Y;
+			y += dir[1] * speedY;
 		}
 
-		if (x < bounds[0]) x = bounds[0];
-		if (x > bounds[2]) x = bounds[2];
-		if (y < bounds[1]) y = bounds[1];
-		if (y > bounds[3]) y = bounds[3];
+		var outOfBounds = false;
+		if (x < bounds[0]) {
+			outOfBounds = true;
+			x = bounds[0];
+		}
+		if (x > bounds[2]) {
+			x = bounds[2];
+			outOfBounds = true;
+		}
+		if (y < bounds[1]) {
+			y = bounds[1];
+			outOfBounds = true;
+		}
+		if (y > bounds[3]) {
+			y = bounds[3];
+			outOfBounds = true;
+		}
 
 		node.css("left", "" + x + "px");
 		node.css("top", "" + y + "px");
+
+		return !outOfBounds;
+	}
+
+	function fire(node) {
+		var p = node[0].player;
+		var delta = currentGameTime - p.lastFired;
+		if (delta > FIRE_RATE) {
+			// Fire!
+			pieCounter++;
+			var pieId = 'pie_' + pieCounter;
+			var pieX = parseInt(node.css("left"));
+			var pieY = parseInt(node.css("top"));
+			if (p.team == 1) {
+				pieX += PLAYER_WIDTH;
+			} else {
+				pieX -= PIE_WIDTH;
+			}
+			console.log("Firing pie for player on team " + p.team);
+			console.log(pieAnim[p.team]);
+			$('#team' + p.team + "pies").addSprite(pieId, {
+				animation: pieAnim[p.team],
+				posx: pieX,
+				posy: pieY,
+				width: PIE_WIDTH,
+				height: PIE_HEIGHT
+			});
+			var pieObj = new Pie($('#' + pieId));
+			pieObj.team = p.team;
+			pies[p.team].push(pieObj);
+			console.log("FIRED PIE " + pieCounter);
+			p.lastFired = currentGameTime;
+		} else {
+			console.log("Didn't fire delta=" + delta + " time=" + currentGameTime + " rate=" + FIRE_RATE);
+		}
 	}
 
 	$(document).ready(function() {
