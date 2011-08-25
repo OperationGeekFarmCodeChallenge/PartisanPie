@@ -13,7 +13,7 @@
  
 // this allow to used the convenient $ notation in  a plugins 
 (function($) {
-    soundManager.url = './'
+    soundManager.url = 'audio/soundmanager2.swf'
     // Here is a bogus soundWrapper written as an example
     $.extend($.gameQuery, {
         SoundWrapper: function(url, loop) {
