@@ -21,7 +21,6 @@
 	var FIRE_RATE = 250;
 	var MAX_PIES_PER_PLAYER = 2;
 	var STARTING_HEALTH = 3;
-	var HEALTH_DISPLAY_Y = PLAYGROUND_HEIGHT - 20;
 
 	var gameOver;
 	var winningTeam;
@@ -57,6 +56,7 @@
 	function animationsForPlayer(playerName) {
 		// ANIM_RATE is the delay between frames
 		var ANIM_RATE = 30;
+		var ANIM_RATE_DESTROY = 60;
 
 		var a = new Array();
 
@@ -67,6 +67,13 @@
 			delta: 50,
 			rate: ANIM_RATE,
 			type: $.gameQuery.ANIMATION_VERTICAL
+		});
+		a["destroy"] = new $.gameQuery.Animation({
+			imageURL: "img/head_" + playerName + "_destroy.png",
+			numberOfFrame: 6,
+			delta: 50,
+			rate: ANIM_RATE_DESTROY,
+			type: $.gameQuery.ANIMATION_VERTICAL | $.gameQuery.ANIMATION_CALLBACK
 		});
 
 		return a;
@@ -125,10 +132,12 @@
 		player1 = new Player($('#player1'));
 		player1.team = 1;
 		player1.health = STARTING_HEALTH;
+		player1.animations = p1anim;
 		$('#player1')[0].player = player1;
 		player2 = new Player($('#player2'));
 		player2.team = 2;
 		player2.health = STARTING_HEALTH;
+		player2.animations = p2anim;
 		$('#player2')[0].player = player2;
 
 		// Game loop
@@ -150,6 +159,7 @@
 		this.node = $(node);
 		this.lastFired = 0;
 		this.team = 1;
+		this.animations = {};
 		return true;
 	}
 
@@ -340,12 +350,16 @@
 	function playerHit(player) {
 		player.health--;
 		updateHealth();
-		if (player.health == 0) {
-			// Player is dead!
-			gameOver = true;
-			winningTeam = player.team == 1 ? 2 : 1;
-			alert("Team " + winningTeam + " wins!");
-		}
+		$('#player' + player.team + 'Body').setAnimation(player.animations["destroy"], function(node) {
+			console.log("First destroy animation sequence over; setting back to idle");
+			$(node).setAnimation(player.animations["idle"]);
+			if (player.health == 0) {
+				// Player is dead!
+				gameOver = true;
+				winningTeam = player.team == 1 ? 2 : 1;
+				alert("Team " + winningTeam + " wins!");
+			}
+		});
 	}
 
 	$(document).ready(function() {
