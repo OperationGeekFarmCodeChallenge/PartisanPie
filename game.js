@@ -156,10 +156,25 @@
 	$(document).ready(function() {
 		init();
 
+		$('#pickplayers').click(function() {
+			console.log("pick players");
+			$('#welcomeScreen').fadeTo(1000, 0, function() {
+				$(this).remove();
+			});
+			$('#playersScreen').fadeTo(1000, 1, function() {
+				var players = ['obama'];
+				
+				for (i = 0; i < players.length; ++i)
+				{
+					// add player to menu
+				}
+			});
+		});
+
 		$('#startbutton').click(function() {
 			console.log("startGame");
 			$.playground().startGame(function() {
-				$('#welcomeScreen').fadeTo(1000, 0, function() {
+				$('#playersScreen').fadeTo(1000, 0, function() {
 					$(this).remove();
 				});
 			});
