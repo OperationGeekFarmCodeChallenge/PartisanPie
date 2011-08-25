@@ -166,20 +166,46 @@
 		if (p1_fire) fire($('#player1'));
 		if (p2_fire) fire($('#player2'));
 
-		// Update projectile positions
+		// Update projectile positions and check for collisions
 		for (var teamId = 1; teamId <= 2; teamId++) {
 			var dir = [teamId == 1 ? 1 : -1, 0];
+			var enemyId = teamId == 1 ? "player2" : "player1";
+			var enemy = $('#' + enemyId);
 			for (var pieNum in pies[teamId]) {
+				if (testCollision(enemy, pies[teamId][pieNum].node)) {
+					// Collided with enemy!
+					console.log("COLLIDE! Player " + teamId + " wins (enemyId=" + enemyId);
+				}
+
+				// Check bounds
 				var inBounds = updateActorPosition(pies[teamId][pieNum].node, dir, pie_bounds, PIE_SPEED_X, 0);
 				if (!inBounds) {
 					// Remove object (leaves hole in array, but that's OK)
 					pies[teamId][pieNum].node.remove();
 					delete pies[teamId][pieNum];
 				}
+
 			}
 		}
+	}
 
-		// Collision detection
+	function testCollision(node1, node2, leewayX, leewayY) {
+		if (typeof leewayX == 'undefined') leewayX = 3;
+		if (typeof leewayY == 'undefined') leewayY = 3;
+		var node1L = parseInt(node1.css("left"));
+		var node1R = node1L + parseInt(node1.css("width"));
+		var node1T = parseInt(node1.css("top"));
+		var node1B = node1T + parseInt(node1.css("height"));
+		var node2L = parseInt(node2.css("left"));
+		var node2R = node2L + parseInt(node2.css("width"));
+		var node2T = parseInt(node2.css("top"));
+		var node2B = node2T + parseInt(node2.css("height"));
+
+		if (node1B - leewayY < node2T) return false;
+		if (node1T + leewayY > node2B) return false;
+		if (node1R - leewayX < node2L) return false;
+		if (node1L + leewayX > node2R) return false;
+		return true;
 	}
 
 	function translateKeysToDirection(keysLDRU) {
