@@ -15,9 +15,27 @@
 	</head>
 	<body>
 	<div id="playground" style="width: 520px; height: 400px; background: black;">
-		<div id="welcomeScreen" style="width: 520px; height: 250px; position: absolute; z-index: 100; background-image: url(logo.png); font-family: verdana, sans-serif;">
+		<div id="welcomeScreen" style="width: 520px; height: 400px; position: absolute; z-index: 100; background-image: url(logo.png); background-repeat: no-repeat; font-family: Arial, sans-serif;">
 			<div style="position: absolute; top: 120px; width: 520px; color: white;">
 				<div id="loadingBar" style="position: relative; left: 100px; height: 15px; width: 0px; background: red;"></div><br />
+				<center><a style="cursor: pointer;" id="pickplayers">Click here to start!</a></center>
+			</div>
+		</div>
+		<div id="playersScreen" style="width: 520px; height: 400px; position: absolute; z-index: 90; font-family: Arial, sans-serif; display: none; color: white;">
+			<div style="width: 230px; height: 350px; left: 0; position: absolute;">
+				<div style="text-align: center; font-size: 120%; padding-top: 50px;">Player 1</div>
+				<div id="players1">
+				</div>
+			</div>
+			<div style="width: 230px; height: 350px; right: 0; position: absolute;">
+				<div style="text-align: center; font-size: 120%; padding-top: 50px;">Player 2</div>
+				<div id="players2">
+				</div>
+			</div>
+			<div style="width: 60px; height: 40px; left: 230px; position: absolute; top: 160px; text-align: center; font-size: 120%;">
+				vs.
+			</div>
+			<div style="width: 520px; height: 50px; left: 0; bottom: 0; position: absolute;">
 				<center><a style="cursor: pointer;" id="startbutton">Click here to start!</a></center>
 			</div>
 		</div>
