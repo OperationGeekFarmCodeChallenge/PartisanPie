@@ -19,6 +19,7 @@
 	var PIE_SPEED_X = 10;
 	var REFRESH_RATE = 15;
 	var FIRE_RATE = 250;
+	var MAX_PIES_PER_PLAYER = 2;
 
 	var p1_ai = false, p2_ai = false;
 	var player1, player2;
@@ -167,6 +168,7 @@
 		if (p2_fire) fire($('#player2'));
 
 		// Update projectile positions and check for collisions
+		var remove_pies = [];
 		for (var teamId = 1; teamId <= 2; teamId++) {
 			var dir = [teamId == 1 ? 1 : -1, 0];
 			var enemyId = teamId == 1 ? "player2" : "player1";
@@ -181,11 +183,18 @@
 				var inBounds = updateActorPosition(pies[teamId][pieNum].node, dir, pie_bounds, PIE_SPEED_X, 0);
 				if (!inBounds) {
 					// Remove object (leaves hole in array, but that's OK)
-					pies[teamId][pieNum].node.remove();
-					delete pies[teamId][pieNum];
+					remove_pies.push([teamId, pieNum]);
 				}
 
 			}
+		}
+
+		// Actually remove pies
+		for (var x = remove_pies.length - 1; x >= 0; x--) {
+			var teamId = remove_pies[x][0];
+			var pieNum = remove_pies[x][1];
+			pies[teamId][pieNum].node.remove();
+			pies[teamId].splice(pieNum, 1);
 		}
 	}
 
@@ -269,34 +278,41 @@
 	function fire(node) {
 		var p = node[0].player;
 		var delta = currentGameTime - p.lastFired;
-		if (delta > FIRE_RATE) {
-			// Fire!
-			pieCounter++;
-			var pieId = 'pie_' + pieCounter;
-			var pieX = parseInt(node.css("left"));
-			var pieY = parseInt(node.css("top"));
-			if (p.team == 1) {
-				pieX += PLAYER_WIDTH;
-			} else {
-				pieX -= PIE_WIDTH;
-			}
-			console.log("Firing pie for player on team " + p.team);
-			console.log(pieAnim[p.team]);
-			$('#team' + p.team + "pies").addSprite(pieId, {
-				animation: pieAnim[p.team],
-				posx: pieX,
-				posy: pieY,
-				width: PIE_WIDTH,
-				height: PIE_HEIGHT
-			});
-			var pieObj = new Pie($('#' + pieId));
-			pieObj.team = p.team;
-			pies[p.team].push(pieObj);
-			console.log("FIRED PIE " + pieCounter);
-			p.lastFired = currentGameTime;
-		} else {
-			console.log("Didn't fire delta=" + delta + " time=" + currentGameTime + " rate=" + FIRE_RATE);
+		if (delta < FIRE_RATE) {
+			// Tried to fire too soon
+			return;
 		}
+		if (pies[p.team].length >= MAX_PIES_PER_PLAYER) {
+			// Too many pies on-screen
+			console.log("too many pies");
+			console.log(pies[p.team]);
+			return;
+		}
+
+		// Fire!
+		pieCounter++;
+		var pieId = 'pie_' + pieCounter;
+		var pieX = parseInt(node.css("left"));
+		var pieY = parseInt(node.css("top"));
+		if (p.team == 1) {
+			pieX += PLAYER_WIDTH;
+		} else {
+			pieX -= PIE_WIDTH;
+		}
+		console.log("Firing pie for player on team " + p.team);
+		console.log(pieAnim[p.team]);
+		$('#team' + p.team + "pies").addSprite(pieId, {
+			animation: pieAnim[p.team],
+			posx: pieX,
+			posy: pieY,
+			width: PIE_WIDTH,
+			height: PIE_HEIGHT
+		});
+		var pieObj = new Pie($('#' + pieId));
+		pieObj.team = p.team;
+		pies[p.team].push(pieObj);
+		console.log("FIRED PIE " + pieCounter);
+		p.lastFired = currentGameTime;
 	}
 
 	$(document).ready(function() {
