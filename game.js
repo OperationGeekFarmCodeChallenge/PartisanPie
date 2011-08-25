@@ -20,7 +20,11 @@
 	var REFRESH_RATE = 15;
 	var FIRE_RATE = 250;
 	var MAX_PIES_PER_PLAYER = 2;
+	var STARTING_HEALTH = 3;
+	var HEALTH_DISPLAY_Y = PLAYGROUND_HEIGHT - 20;
 
+	var gameOver;
+	var winningTeam;
 	var p1_ai = false, p2_ai = false;
 	var player1, player2;
 	var p1anim, p2anim;
@@ -85,6 +89,8 @@
 	}
 
 	function init() {
+		gameOver = false;
+
 		background = new $.gameQuery.Animation({imageURL: "background.png"});
 
 		var p1_x = PLAYER_INITIAL_OFFSET - (PLAYER_WIDTH / 2);
@@ -112,12 +118,17 @@
 				.addGroup("team2pies", {width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT}).end()
 				.addGroup("overlay", {width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT});
 
+		// Add HUD
+		$('#overlay').append("<div id=\"health1\" class=\"health\">Health: XX</div><div id=\"health2\" class=\"health\">Health: YY</div>");
+
 		// Add players
 		player1 = new Player($('#player1'));
 		player1.team = 1;
+		player1.health = STARTING_HEALTH;
 		$('#player1')[0].player = player1;
 		player2 = new Player($('#player2'));
 		player2.team = 2;
+		player2.health = STARTING_HEALTH;
 		$('#player2')[0].player = player2;
 
 		// Game loop
@@ -130,6 +141,9 @@
 		pies[1] = new Array();
 		pies[2] = new Array();
 		pieCounter = 0;
+
+		// Display initial health counter
+		updateHealth();
 	}
 
 	function Player(node) {
@@ -176,7 +190,10 @@
 			for (var pieNum in pies[teamId]) {
 				if (testCollision(enemy, pies[teamId][pieNum].node)) {
 					// Collided with enemy!
-					console.log("COLLIDE! Player " + teamId + " wins (enemyId=" + enemyId);
+					console.log("COLLIDE! Player " + teamId + " wins (enemyId=" + enemyId + ")");
+					remove_pies.push([teamId, pieNum]);
+					playerHit(teamId == 1 ? player2 : player1);
+					continue;
 				}
 
 				// Check bounds
@@ -313,6 +330,22 @@
 		pies[p.team].push(pieObj);
 		console.log("FIRED PIE " + pieCounter);
 		p.lastFired = currentGameTime;
+	}
+
+	function updateHealth() {
+		$('#health1').html("Health: " + player1.health);
+		$('#health2').html("Health: " + player2.health);
+	}
+
+	function playerHit(player) {
+		player.health--;
+		updateHealth();
+		if (player.health == 0) {
+			// Player is dead!
+			gameOver = true;
+			winningTeam = player.team == 1 ? 2 : 1;
+			alert("Team " + winningTeam + " wins!");
+		}
 	}
 
 	$(document).ready(function() {
