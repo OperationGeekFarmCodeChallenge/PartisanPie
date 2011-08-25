@@ -9,6 +9,8 @@
 	var PLAYER_WIDTH = 40;
 	var PLAYER_HEIGHT = 50;
 	var PLAYER_INITIAL_OFFSET = 50;
+	var PLAYER_SPEED_X = 4;
+	var PLAYER_SPEED_Y = 4;
 	var REFRESH_RATE = 15;
 
 	var player1, player2;
@@ -42,7 +44,7 @@
 		var p2_x = (PLAYGROUND_WIDTH - PLAYER_INITIAL_OFFSET) - (PLAYER_WIDTH / 2);
 		var p2_y = (PLAYGROUND_HEIGHT / 2) - (PLAYER_HEIGHT / 2);
 
-		p1anim = animationsForPlayer("obama");
+		p1anim = animationsForPlayer("romney");
 		p2anim = animationsForPlayer("obama");
 
 		// Initialize game
@@ -55,19 +57,20 @@
 						.addSprite("player1Body", {animation: p1anim["idle"], posx: 0, posy: 0, width: PLAYER_WIDTH, height: PLAYER_HEIGHT})
 					.end()
 					.addGroup("player2", {posx: p2_x, posy: p2_y, width: PLAYER_WIDTH, height: PLAYER_HEIGHT})
-						.addSprite("player2Body", {animation: p1anim["idle"], posx: 0, posy: 0, width: PLAYER_WIDTH, height: PLAYER_HEIGHT})
+						.addSprite("player2Body", {animation: p2anim["idle"], posx: 0, posy: 0, width: PLAYER_WIDTH, height: PLAYER_HEIGHT})
 					.end()
 				.addGroup("team1pies", {width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT}).end()
 				.addGroup("team2pies", {width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT}).end()
 				.addGroup("overlay", {width: PLAYGROUND_WIDTH, height: PLAYGROUND_HEIGHT});
 
 		// Add players
-		$('#player1')[0].player = new Player($('#player1'));
-		$('#player2')[0].player = new Player($('#player2'));
+		player1 = new Player($('#player1'));
+		$('#player1')[0].player = player1;
+		player2 = new Player($('#player2'));
+		$('#player2')[0].player = player2;
 
 		// Game loop
-		$.playground().registerCallback(function() {
-		}, REFRESH_RATE);
+		$.playground().registerCallback(gameTick, REFRESH_RATE);
 		console.log("defined game loop");
 	}
 
@@ -77,9 +80,54 @@
 	}
 
 	function gameTick() {
-		console.log("gameTick()");
+
+		// Inputs
+		p1_dir = translateKeysToDirection(["A", "S", "D", "W"]);
+		p2_dir = translateKeysToDirection(["J", "K", "L", "I"]);
+
+		// Update player positions
+		updatePlayerPosition($('#player1'), p1_dir);
+		updatePlayerPosition($('#player2'), p2_dir);
+
+		// Update projectile positions
+
+		// Collision detection
 	}
 
+	function translateKeysToDirection(keysLDRU) {
+		var dir = [0, 0];
+		if (keyIsDown(keysLDRU[0])) {
+			// Left
+			dir[0] -= 1;
+		}
+		if (keyIsDown(keysLDRU[1])) {
+			dir[1] += 1;
+		}
+		if (keyIsDown(keysLDRU[2])) {
+			dir[0] += 1;
+		}
+		if (keyIsDown(keysLDRU[3])) {
+			dir[1] -= 1;
+		}
+		return dir;
+	}
+
+	function keyIsDown(char) {
+		return $.gameQuery.keyTracker[char.charCodeAt(0)];
+	}
+
+	function updatePlayerPosition(node, dir, bounds) {
+		var x = parseInt(node.css("left"));
+		var y = parseInt(node.css("top"));
+		if (dir[0] != 0) {
+			x += dir[0] * PLAYER_SPEED_X;
+		}
+		if (dir[1] != 0) {
+			y += dir[1] * PLAYER_SPEED_Y;
+		}
+		node.css("left", "" + x + "px");
+		node.css("top", "" + y + "px");
+	}
 
 	$(document).ready(function() {
 		init();
