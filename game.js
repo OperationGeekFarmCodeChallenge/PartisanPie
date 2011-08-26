@@ -42,7 +42,8 @@
 	var pieCounter;
 	var background;
 	var currentGameTime;
-	var chatterSound;
+	var p1chatter, p2chatter;
+	var p1moving, p2moving;
 
 	// Bounds that player is allowed to move within (x1, y1, x2, y2)
 	var p1_bounds = [
@@ -174,14 +175,10 @@
 		pieCounter = 0;
 		
 		//Initiaize Audio
-		chatterSound = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
-		obamaChatterSound = new $.gameQuery.SoundWrapper("audio/obama.mp3", true);
-		romneyChatterSound = new $.gameQuery.SoundWrapper("audio/romney.mp3", true);
+		p1chatter = new $.gameQuery.SoundWrapper("audio/" + player1name + ".mp3", true);
+		p2chatter = new $.gameQuery.SoundWrapper("audio/" + player2name + ".mp3", true);
 		deathSound = new $.gameQuery.SoundWrapper("audio/death.mp3",false);
 		hitSound = new $.gameQuery.SoundWrapper("audio/ouch.mp3",false);
-		//Initialize Audio
-	//	soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
-		//Add sounds to which objects?
 		
 		player1.pies = pies[1];
 		player2.pies = pies[2];
@@ -435,13 +432,19 @@
 
 		// Loser animation
 		if (player.health == 0) {
+			// Play death sound
+			if (deathSound.ready) deathSound.play();
 			gameOver = true;
 			winningTeam = player.team == 1 ? 2 : 1;
 			$('#player' + player.team + 'Body').setAnimation(player.animations["destroy"], function(node) {
 				$(node).setAnimation();
 				player.animating = false;
+				p1chatter.stop();
+				p2chatter.stop();
 				alert("Team " + winningTeam + " wins!");
 			});
+		} else {
+			if (hitSound.ready) hitSound.play();
 		}
 	}
 
@@ -542,7 +545,8 @@
 				});
 			});
 			
-			if (chatterSound.ready) chatterSound.play();
+			if (p1chatter.ready) p1chatter.play();
+			if (p2chatter.ready) p2chatter.play();
 		});
 		
 		//try to start audio or find another way to do it later
