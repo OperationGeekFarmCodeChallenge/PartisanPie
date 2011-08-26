@@ -26,6 +26,7 @@
 	var winningTeam;
 	var p1_ai = false, p2_ai = false;
 	var player1, player2;
+	var player1name, player2name;
 	var p1anim, p2anim;
 	var pieAnim;
 	var pies;
@@ -106,8 +107,8 @@
 		var p2_x = (PLAYGROUND_WIDTH - PLAYER_INITIAL_OFFSET) - (PLAYER_WIDTH / 2);
 		var p2_y = (PLAYGROUND_HEIGHT / 2) - (PLAYER_HEIGHT / 2);
 
-		p1anim = animationsForPlayer("romney");
-		p2anim = animationsForPlayer("obama");
+		p1anim = animationsForPlayer(player1name);
+		p2anim = animationsForPlayer(player2name);
 		pieAnim = animationsForPie();
 
 		// Initialize game
@@ -368,24 +369,40 @@
 	}
 
 	$(document).ready(function() {
-		init();
+		var players = ["obama", "romney"];
 
 		$('#pickplayers').click(function() {
+			
+			function setPlayer(team, index) {
+				$('#playersChoice'+team).css('background-image', 'url(img/'+players[index]+'.png)');
+				$('#playersChoice'+team)[0].playerIndex = index;
+				$('#playersChoiceName'+team).html(players[index]);
+			}
+			
+			setPlayer(1, 1);
+			setPlayer(2, 0);
+			
+			$('#playersChoice1').click(function() {
+				setPlayer(1, (this.playerIndex + 1) % players.length);
+			});
+			$('#playersChoice2').click(function() {
+				setPlayer(2, (this.playerIndex + 1) % players.length);
+			});
+			
 			console.log("pick players");
 			$('#welcomeScreen').fadeTo(1000, 0, function() {
 				$(this).remove();
 			});
 			$('#playersScreen').fadeTo(1000, 1, function() {
-				var players = ['obama'];
-				
-				for (i = 0; i < players.length; ++i)
-				{
-					// add player to menu
-				}
 			});
 		});
 
 		$('#startbutton').click(function() {
+			player1name = players[$('#playersChoice1')[0].playerIndex];
+			player2name = players[$('#playersChoice2')[0].playerIndex];
+			
+			init();
+			
 			console.log("startGame");
 			$.playground().startGame(function() {
 				$('#playersScreen').fadeTo(1000, 0, function() {
