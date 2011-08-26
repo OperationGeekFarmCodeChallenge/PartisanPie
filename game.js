@@ -4,6 +4,13 @@
  */
 (function() {
 
+	if (typeof console == 'undefined') {
+		console = {
+			log: function(msg) {
+			}
+		};
+	}
+
 	var PLAYGROUND_WIDTH = 520;
 	var PLAYGROUND_HEIGHT = 400;
 	var PLAYER_WIDTH = 40;
@@ -20,12 +27,13 @@
 	var REFRESH_RATE = 15;
 	var FIRE_RATE = 250;
 	var MAX_PIES_PER_PLAYER = 2;
-	var STARTING_HEALTH = 3;
+	var STARTING_HEALTH = 5;
 
 	var gameOver;
 	var winningTeam;
-	var p1_ai = false, p2_ai = false;
+	var p1_input = 'human', p2_input = 'hard_ai';
 	var player1, player2;
+	var player1name, player2name;
 	var p1anim, p2anim;
 	var pieAnim;
 	var pies;
@@ -106,8 +114,8 @@
 		var p2_x = (PLAYGROUND_WIDTH - PLAYER_INITIAL_OFFSET) - (PLAYER_WIDTH / 2);
 		var p2_y = (PLAYGROUND_HEIGHT / 2) - (PLAYER_HEIGHT / 2);
 
-		p1anim = animationsForPlayer("romney");
-		p2anim = animationsForPlayer("obama");
+		p1anim = animationsForPlayer(player1name);
+		p2anim = animationsForPlayer(player2name);
 		pieAnim = animationsForPie();
 
 		// Initialize game
@@ -151,10 +159,21 @@
 		pies[1] = new Array();
 		pies[2] = new Array();
 		pieCounter = 0;
+<<<<<<< HEAD
 		
 		//Initiaize Audio
 		chatterSound = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
 				
+=======
+
+		//Initialize Audio
+		soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
+		//Add sounds to which objects?
+		
+		player1.pies = pies[1];
+		player2.pies = pies[2];
+
+>>>>>>> 8e0ae3c21f70ea9eb251c8a07f3fdcdaf7e2e63b
 		// Display initial health counter
 		updateHealth();
 	}
@@ -164,6 +183,19 @@
 		this.lastFired = 0;
 		this.team = 1;
 		this.animations = {};
+		this.x = function() {
+			return parseInt($(this.node).css('left'));
+		};
+		this.y = function() {
+			return parseInt($(this.node).css('top'));
+		};
+		this.relativeX = function() {
+			var x = this.x();
+			if (this.team == 2) {
+				x = PLAYGROUND_WIDTH - x - PLAYER_WIDTH;
+			}
+			return x;
+		};
 		return true;
 	}
 
@@ -172,20 +204,37 @@
 		this.team = 1;
 		this.fired = currentGameTime;
 		this.speed = PIE_SPEED_X;
+		this.x = function() {
+			return parseInt($(this.node).css('left'));
+		};
+		this.y = function() {
+			return parseInt($(this.node).css('top'));
+		};
+		this.relativeX = function() {
+			var x = this.x();
+			if (this.team == 2) {
+				x = PLAYGROUND_WIDTH - x - PIE_WIDTH;
+			}
+			return x;
+		};
 		return true;
 	}
 
 	function gameTick() {
 
+		if (gameOver) {
+			return;
+		}
+
 		currentGameTime = new Date().getTime();
 
 		// Input player directions
-		p1_dir = p1_ai ? [0, 0] : translateKeysToDirection(["A", "S", "D", "W"]);
-		p2_dir = p2_ai ? [0, 0] : translateKeysToDirection(["J", "K", "L", "I"]);
+		p1_dir = inputMechanisms[p1_input].getDirections(player1, player2);
+		p2_dir = inputMechanisms[p2_input].getDirections(player2, player1);
 
 		// Input firing
-		p1_fire = p1_ai ? false : keyIsDown("F");
-		p2_fire = p2_ai ? false : keyIsDown("H");
+		p1_fire = inputMechanisms[p1_input].getFire(player1, player2);
+		p2_fire = inputMechanisms[p2_input].getFire(player2, player1);
 
 		// Update player positions
 		updateActorPosition($('#player1'), p1_dir, p1_bounds, PLAYER_SPEED_X, PLAYER_SPEED_Y);
@@ -365,26 +414,46 @@
 			}
 		});
 	}
+	function capitaliseFirstLetter(string)
+	{
+    	return string.charAt(0).toUpperCase() + string.slice(1);
+	}
 
 	$(document).ready(function() {
-		init();
+		var players = ["obama", "romney"];
 
 		$('#pickplayers').click(function() {
+			
+			function setPlayer(team, index) {
+				$('#playersChoice'+team).css('background-image', 'url(img/'+players[index]+'.png)');
+				$('#playersChoice'+team)[0].playerIndex = index;
+				$('#playersChoiceName'+team).html(capitaliseFirstLetter(players[index]));
+			}
+			
+			setPlayer(1, 1);
+			setPlayer(2, 0);
+			
+			$('#playersChoice1').click(function() {
+				setPlayer(1, (this.playerIndex + 1) % players.length);
+			});
+			$('#playersChoice2').click(function() {
+				setPlayer(2, (this.playerIndex + 1) % players.length);
+			});
+			
 			console.log("pick players");
 			$('#welcomeScreen').fadeTo(1000, 0, function() {
 				$(this).remove();
 			});
 			$('#playersScreen').fadeTo(1000, 1, function() {
-				var players = ['obama'];
-				
-				for (i = 0; i < players.length; ++i)
-				{
-					// add player to menu
-				}
 			});
 		});
 
 		$('#startbutton').click(function() {
+			player1name = players[$('#playersChoice1')[0].playerIndex];
+			player2name = players[$('#playersChoice2')[0].playerIndex];
+			
+			init();
+			
 			console.log("startGame");
 			$.playground().startGame(function() {
 				$('#playersScreen').fadeTo(1000, 0, function() {
@@ -400,6 +469,102 @@
 	});
 	
 	
+
+	var inputMechanisms = {
+		'human': {
+			getDirections: function(me, enemy) {
+				var dir;
+				if (me.team == 1) {
+					dir = translateKeysToDirection(["A", "S", "D", "W"]);
+				} else {
+					dir = translateKeysToDirection(["J", "K", "L", "I"]);
+				}
+				return dir;
+			},
+			getFire: function(me, enemy) {
+				if (me.team == 1) {
+					return keyIsDown("F");
+				} else {
+					return keyIsDown("H");
+				}
+			}
+		},
+		'easy_ai': {
+			getDirections: function(me, enemy) {
+				var dirX = 0, dirY = 0;
+				// Run away
+				if (me.y() < enemy.y()) {
+					dirY = -1;
+				} else if (me.y() > enemy.y()) {
+					dirY = 1;
+				} else {
+					// Run to center
+					if (me.y() > PLAYGROUND_HEIGHT / 2) {
+						dirY = -1;
+					} else {
+						dirY = 1;
+					}
+				}
+				// If enemy is shooting, run to back
+				if (enemy.pies.length) {
+					dirX = -1;
+				} else {
+					// Otherwise go to center of screen
+					if (me.relativeX() > PLAYGROUND_WIDTH / 4) {
+						dirX = 1;
+					} else if (me.relativeX() < PLAYGROUND_WIDTH / 4) {
+						dirX = -1;
+					} else {
+						dirX = 0;
+					}
+				}
+				if (me.team == 2) dirX *= -1;
+				return [dirX, dirY];
+			},
+			getFire: function(me, enemy) {
+				if (Math.random() < 0.02) {
+					return true;
+				}
+				return false;
+			}
+		},
+		'hard_ai': {
+			getDirections: function(me, enemy) {
+				var dirX = 0, dirY = 0;
+
+				// Run toward enemy
+				dirX = 1;
+				if (enemy.y() > me.y()) {
+					dirY = 1;
+				} else {
+					dirY = -1;
+				}
+
+				// Unless pie is in the air and may hit us
+				if (enemy.pies.length) {
+					var pieT = enemy.pies[0].y();
+					var pieB = pieT + PIE_HEIGHT;
+					var meT = me.y();
+					var meB = meT + PLAYER_HEIGHT;
+					if (pieB <= meT && pieT <= meB) {
+						// Run away!
+						if (pieT > meT) {
+							dirY = -1;
+						} else {
+							dirY = 1;
+						}
+					}
+				}
+
+				if (me.team == 2) dirX *= -1;
+				return [dirX, dirY];
+			},
+
+			getFire: function(me, enemy) {
+				return true;
+			}
+		}
+	};
 
 }())
 
