@@ -38,6 +38,7 @@
 	var p1anim, p2anim;
 	var pieAnim;
 	var pies;
+	var explodingPies;
 	var pieCounter;
 	var background;
 	var currentGameTime;
@@ -83,14 +84,14 @@
 			numberOfFrame: 6,
 			delta: 50,
 			rate: ANIM_RATE_DESTROY,
-			type: $.gameQuery.ANIMATION_VERTICAL | $.gameQuery.ANIMATION_CALLBACK
+			type: $.gameQuery.ANIMATION_VERTICAL | $.gameQuery.ANIMATION_CALLBACK | $.gameQuery.ANIMATION_ONCE
 		});
 
 		return a;
 	}
 
 	function animationsForPie() {
-		var ANIM_RATE = 30;
+		var ANIM_RATE = 60;
 		var a = new Array();
 		var animInfo = {
 			imageURL: "img/flying_pie_left.png",
@@ -104,14 +105,14 @@
 		a["team2_idle"] = new $.gameQuery.Animation(animInfo);
 
 		var animInfoExplode = {
-			imageURL: "img/flying_pie_left_explode.png",
+			imageURL: "img/flying_pie_explode_left.png",
 			numberOfFrame: 4,
 			delta: 50,
 			rate: ANIM_RATE,
 			type: $.gameQuery.ANIMATION_VERTICAL | $.gameQuery.ANIMATION_CALLBACK
 		};
 		a["team1_explode"] = new $.gameQuery.Animation(animInfoExplode);
-		animInfoExplode.imageURL = "img/flying_pie_right_explode.png";
+		animInfoExplode.imageURL = "img/flying_pie_explode_right.png";
 		a["team2_explode"] = new $.gameQuery.Animation(animInfoExplode);
 		return a;
 	}
@@ -217,6 +218,7 @@
 		this.team = 1;
 		this.fired = currentGameTime;
 		this.speed = PIE_SPEED_X;
+		this.exploding = false;
 		this.x = function() {
 			return parseInt($(this.node).css('left'));
 		};
@@ -263,26 +265,26 @@
 		var remove_pies = [];
 		for (var teamId = 1; teamId <= 2; teamId++) {
 			var dir = [teamId == 1 ? 1 : -1, 0];
-			var enemyId = teamId == 1 ? "player2" : "player1";
-			var enemy = $('#' + enemyId);
-
-			// Don't hit player if player is already being hit
-			if (enemy.hit) continue;
+			var enemyNum = teamId == 1 ? 2 : 1;
+			var enemyId = "player" + enemyNum;
+			var enemyNode = $('#' + enemyId);
+			var enemy = teamId == 1 ? player2 : player1;
 
 			for (var pieNum in pies[teamId]) {
-				if (testCollision(enemy, pies[teamId][pieNum].node)) {
+				if (!enemy.hit && testCollision(enemyNode, pies[teamId][pieNum].node)) {
 					// Collided with enemy!
-					console.log("COLLIDE! Player " + teamId + " wins (enemyId=" + enemyId + ")");
-					remove_pies.push([teamId, pieNum]);
-					playerHit(teamId == 1 ? player2 : player1);
+					explodePie(pies[teamId][pieNum]);
+					playerHit(enemy);
 					continue;
 				}
 
-				// Check bounds
-				var inBounds = updateActorPosition(pies[teamId][pieNum].node, dir, pie_bounds, PIE_SPEED_X, 0);
-				if (!inBounds) {
-					// Remove object (leaves hole in array, but that's OK)
-					remove_pies.push([teamId, pieNum]);
+				// Move pie & Check bounds
+				if (!pies[teamId][pieNum].exploding) {
+					var inBounds = updateActorPosition(pies[teamId][pieNum].node, dir, pie_bounds, PIE_SPEED_X, 0);
+					if (!inBounds) {
+						// Remove object (leaves hole in array, but that's OK)
+						remove_pies.push([teamId, pieNum]);
+					}
 				}
 
 			}
@@ -418,25 +420,58 @@
 	}
 
 	function playerHit(player) {
+		console.log("playerHit");
+		console.log(player);
+
 		player.health--;
 		player.hit = true;
 		player.animating = true;
 		updateHealth();
+
+		// Invincibility timeout
 		setTimeout(function() {
 			player.hit = false;
 		}, HIT_INVINCIBILITY_TIME);
-		$('#player' + player.team + 'Body').setAnimation(player.animations["destroy"], function(node) {
-			console.log("First destroy animation sequence over; setting back to idle");
-			$(node).setAnimation(player.animations["idle"]);
-			player.animating = false;
-			if (player.health == 0) {
-				// Player is dead!
-				gameOver = true;
-				winningTeam = player.team == 1 ? 2 : 1;
+
+		// Loser animation
+		if (player.health == 0) {
+			gameOver = true;
+			winningTeam = player.team == 1 ? 2 : 1;
+			$('#player' + player.team + 'Body').setAnimation(player.animations["destroy"], function(node) {
+				$(node).setAnimation();
+				player.animating = false;
 				alert("Team " + winningTeam + " wins!");
+			});
+		}
+	}
+
+	function explodePie(pieObj) {
+		console.log("explodePie");
+		console.log(pieObj);
+		pieObj.exploding = true;
+		pieObj.node.setAnimation(pieAnim["team" + pieObj.team + "_explode"], function(node) {
+			console.log("Pie finished exploding");
+			var hitPlayer = pieObj.team == 1 ? player2 : player1;
+			hitPlayer.animating = false;
+
+			// Remove pie from screen
+			var removed = false;
+			for (var x in pies[pieObj.team]) {
+				if (pies[pieObj.team][x] == pieObj) {
+					// Remove!
+					console.log("Found pie to remove");
+					pieObj.node.remove();
+					pies[pieObj.team].splice(x, 1);
+					removed = true;
+					break;
+				}
+			}
+			if (!removed) {
+				console.log("Ooops! Did not remove pie");
 			}
 		});
 	}
+
 	function capitaliseFirstLetter(string)
 	{
     	return string.charAt(0).toUpperCase() + string.slice(1);
