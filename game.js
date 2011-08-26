@@ -426,6 +426,7 @@
 
 	$(document).ready(function() {
 		var players = ["obama", "romney"];
+		var levels = ["human", "easy", "hard"];
 
 		$('#pickplayers').click(function() {
 			
@@ -435,14 +436,33 @@
 				$('#playersChoiceName'+team).html(capitaliseFirstLetter(players[index]));
 			}
 			
+			function setLevel(team, index) {
+				$('#playersLevel'+team)[0].levelIndex = index;
+				$('#playersLevel'+team).html(levels[index]);
+			}
+			
 			setPlayer(1, 1);
 			setPlayer(2, 0);
 			
+			setLevel(1, 0);
+			setLevel(2, 1);
+			
 			$('#playersChoice1').click(function() {
 				setPlayer(1, (this.playerIndex + 1) % players.length);
+				return false;
 			});
 			$('#playersChoice2').click(function() {
 				setPlayer(2, (this.playerIndex + 1) % players.length);
+				return false;
+			});
+			
+			$('#playersLevel1').click(function() {
+				setLevel(1, (this.levelIndex + 1) % levels.length);
+				return false;
+			});
+			$('#playersLevel2').click(function() {
+				setLevel(2, (this.levelIndex + 1) % levels.length);
+				return false;
 			});
 			
 			console.log("pick players");
