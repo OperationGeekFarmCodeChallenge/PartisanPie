@@ -31,7 +31,7 @@
 
 	var gameOver;
 	var winningTeam;
-	var p1_input = 'human', p2_input = 'easy_ai';
+	var p1_input = 'human', p2_input = 'easy';
 	var player1, player2;
 	var player1name, player2name;
 	var p1anim, p2anim;
@@ -477,6 +477,9 @@
 			player1name = players[$('#playersChoice1')[0].playerIndex];
 			player2name = players[$('#playersChoice2')[0].playerIndex];
 			
+			p1_input = levels[$('#playersLevel1')[0].levelIndex]
+			p2_input = levels[$('#playersLevel2')[0].levelIndex]
+			
 			init();
 			
 			console.log("startGame");
@@ -514,7 +517,7 @@
 				}
 			}
 		},
-		'easy_ai': {
+		'easy': {
 			getDirections: function(me, enemy) {
 				var dirX = 0, dirY = 0;
 				// Run away
@@ -553,7 +556,7 @@
 				return false;
 			}
 		},
-		'hard_ai': {
+		'hard': {
 			getDirections: function(me, enemy) {
 				var dirX = 0, dirY = 0;
 
