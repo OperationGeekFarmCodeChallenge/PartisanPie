@@ -28,6 +28,7 @@
 	var FIRE_RATE = 250;
 	var MAX_PIES_PER_PLAYER = 2;
 	var STARTING_HEALTH = 5;
+	var HIT_INVINCIBILITY_TIME = 1000;
 
 	var gameOver;
 	var winningTeam;
@@ -190,6 +191,8 @@
 		this.lastFired = 0;
 		this.team = 1;
 		this.animations = {};
+		this.hit = false;
+		this.animating = false;
 		this.x = function() {
 			return parseInt($(this.node).css('left'));
 		};
@@ -237,7 +240,9 @@
 
 		// Input player directions
 		p1_dir = inputMechanisms[p1_input].getDirections(player1, player2);
+		if (player1.animating) p1_dir = [0, 0];
 		p2_dir = inputMechanisms[p2_input].getDirections(player2, player1);
+		if (player2.animating) p2_dir = [0, 0];
 
 		// Input firing
 		p1_fire = inputMechanisms[p1_input].getFire(player1, player2);
@@ -257,6 +262,10 @@
 			var dir = [teamId == 1 ? 1 : -1, 0];
 			var enemyId = teamId == 1 ? "player2" : "player1";
 			var enemy = $('#' + enemyId);
+
+			// Don't hit player if player is already being hit
+			if (enemy.hit) continue;
+
 			for (var pieNum in pies[teamId]) {
 				if (testCollision(enemy, pies[teamId][pieNum].node)) {
 					// Collided with enemy!
@@ -407,10 +416,16 @@
 
 	function playerHit(player) {
 		player.health--;
+		player.hit = true;
+		player.animating = true;
 		updateHealth();
+		setTimeout(function() {
+			player.hit = false;
+		}, HIT_INVINCIBILITY_TIME);
 		$('#player' + player.team + 'Body').setAnimation(player.animations["destroy"], function(node) {
 			console.log("First destroy animation sequence over; setting back to idle");
 			$(node).setAnimation(player.animations["idle"]);
+			player.animating = false;
 			if (player.health == 0) {
 				// Player is dead!
 				gameOver = true;
