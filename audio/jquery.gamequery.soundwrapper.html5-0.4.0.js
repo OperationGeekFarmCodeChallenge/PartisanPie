@@ -11,8 +11,14 @@
         SoundWrapper: function(url, loop) {
             this.audio = new Audio();
             
+            console.log("html5_audio_wrapper");
+            
             // start loading the sound. Should turn this.ready to true once done.
             this.load  = function(){
+            	
+            	console.log("html5_audio_wrapper.load.url");
+            	console.log(url);
+            	            	
                 this.audio.src = url;
                 this.audio.loop = loop;
                 this.audio.load();
@@ -20,6 +26,7 @@
             
             // plays the sound if this.ready == true
             this.play  = function(){
+            	console.log("html5_audio_wrapper.PLAY");
                 this.audio.play();
             };
             
@@ -45,6 +52,7 @@
             };
             
             // add the sound to the manager
+            console.log("html5_audio_wrapper.resourceManager");
             $.gameQuery.resourceManager.addSound(this);
             return true;
         }});

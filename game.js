@@ -32,7 +32,7 @@
 	var pieCounter;
 	var background;
 	var currentGameTime;
-	var soundWrap;
+	var chatterSound;
 
 	// Bounds that player is allowed to move within (x1, y1, x2, y2)
 	var p1_bounds = [
@@ -152,10 +152,9 @@
 		pies[2] = new Array();
 		pieCounter = 0;
 		
-		//Initialize Audio
-		soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
-		//Add sounds to which objects?
-		
+		//Initiaize Audio
+		chatterSound = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
+				
 		// Display initial health counter
 		updateHealth();
 	}
@@ -392,7 +391,11 @@
 					$(this).remove();
 				});
 			});
+			
+			if (chatterSound.ready) chatterSound.play();
 		});
+		
+		//try to start audio or find another way to do it later
 
 	});
 	
