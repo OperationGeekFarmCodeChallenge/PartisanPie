@@ -32,7 +32,7 @@
 
 	var gameOver;
 	var winningTeam;
-	var p1_input = 'human', p2_input = 'easy_ai';
+	var p1_input = 'human', p2_input = 'easy';
 	var player1, player2;
 	var player1name, player2name;
 	var p1anim, p2anim;
@@ -174,9 +174,12 @@
 		
 		//Initiaize Audio
 		chatterSound = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
-		
+		obamaChatterSound = new $.gameQuery.SoundWrapper("audio/obama.mp3", true);
+		romneyChatterSound = new $.gameQuery.SoundWrapper("audio/romney.mp3", true);
+		deathSound = new $.gameQuery.SoundWrapper("audio/death.mp3",false);
+		hitSound = new $.gameQuery.SoundWrapper("audio/ouch.mp3",false);
 		//Initialize Audio
-		soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
+	//	soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
 		//Add sounds to which objects?
 		
 		player1.pies = pies[1];
@@ -441,6 +444,7 @@
 
 	$(document).ready(function() {
 		var players = ["obama", "romney"];
+		var levels = ["human", "easy", "hard"];
 
 		$('#pickplayers').click(function() {
 			
@@ -450,14 +454,33 @@
 				$('#playersChoiceName'+team).html(capitaliseFirstLetter(players[index]));
 			}
 			
+			function setLevel(team, index) {
+				$('#playersLevel'+team)[0].levelIndex = index;
+				$('#playersLevel'+team).html(levels[index]);
+			}
+			
 			setPlayer(1, 1);
 			setPlayer(2, 0);
 			
+			setLevel(1, 0);
+			setLevel(2, 1);
+			
 			$('#playersChoice1').click(function() {
 				setPlayer(1, (this.playerIndex + 1) % players.length);
+				return false;
 			});
 			$('#playersChoice2').click(function() {
 				setPlayer(2, (this.playerIndex + 1) % players.length);
+				return false;
+			});
+			
+			$('#playersLevel1').click(function() {
+				setLevel(1, (this.levelIndex + 1) % levels.length);
+				return false;
+			});
+			$('#playersLevel2').click(function() {
+				setLevel(2, (this.levelIndex + 1) % levels.length);
+				return false;
 			});
 			
 			console.log("pick players");
@@ -471,6 +494,9 @@
 		$('#startbutton').click(function() {
 			player1name = players[$('#playersChoice1')[0].playerIndex];
 			player2name = players[$('#playersChoice2')[0].playerIndex];
+			
+			p1_input = levels[$('#playersLevel1')[0].levelIndex]
+			p2_input = levels[$('#playersLevel2')[0].levelIndex]
 			
 			init();
 			
@@ -509,7 +535,7 @@
 				}
 			}
 		},
-		'easy_ai': {
+		'easy': {
 			getDirections: function(me, enemy) {
 				var dirX = 0, dirY = 0;
 				// Run away
@@ -548,7 +574,7 @@
 				return false;
 			}
 		},
-		'hard_ai': {
+		'hard': {
 			getDirections: function(me, enemy) {
 				var dirX = 0, dirY = 0;
 
