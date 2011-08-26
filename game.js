@@ -173,9 +173,12 @@
 		
 		//Initiaize Audio
 		chatterSound = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
-		
+		obamaChatterSound = new $.gameQuery.SoundWrapper("audio/obama.mp3", true);
+		romneyChatterSound = new $.gameQuery.SoundWrapper("audio/romney.mp3", true);
+		deathSound = new $.gameQuery.SoundWrapper("audio/death.mp3",false);
+		hitSound = new $.gameQuery.SoundWrapper("audio/ouch.mp3",false);
 		//Initialize Audio
-		soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
+	//	soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
 		//Add sounds to which objects?
 		
 		player1.pies = pies[1];
