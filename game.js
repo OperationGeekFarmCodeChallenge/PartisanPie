@@ -4,6 +4,13 @@
  */
 (function() {
 
+	if (typeof console == 'undefined') {
+		console = {
+			log: function(msg) {
+			}
+		};
+	}
+
 	var PLAYGROUND_WIDTH = 520;
 	var PLAYGROUND_HEIGHT = 400;
 	var PLAYER_WIDTH = 40;
