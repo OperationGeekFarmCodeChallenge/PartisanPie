@@ -20,11 +20,11 @@
 	var REFRESH_RATE = 15;
 	var FIRE_RATE = 250;
 	var MAX_PIES_PER_PLAYER = 2;
-	var STARTING_HEALTH = 3;
+	var STARTING_HEALTH = 5;
 
 	var gameOver;
 	var winningTeam;
-	var p1_ai = false, p2_ai = false;
+	var p1_input = 'human', p2_input = 'hard_ai';
 	var player1, player2;
 	var player1name, player2name;
 	var p1anim, p2anim;
@@ -152,11 +152,14 @@
 		pies[1] = new Array();
 		pies[2] = new Array();
 		pieCounter = 0;
-		
+
 		//Initialize Audio
 		soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
 		//Add sounds to which objects?
 		
+		player1.pies = pies[1];
+		player2.pies = pies[2];
+
 		// Display initial health counter
 		updateHealth();
 	}
@@ -166,6 +169,19 @@
 		this.lastFired = 0;
 		this.team = 1;
 		this.animations = {};
+		this.x = function() {
+			return parseInt($(this.node).css('left'));
+		};
+		this.y = function() {
+			return parseInt($(this.node).css('top'));
+		};
+		this.relativeX = function() {
+			var x = this.x();
+			if (this.team == 2) {
+				x = PLAYGROUND_WIDTH - x - PLAYER_WIDTH;
+			}
+			return x;
+		};
 		return true;
 	}
 
@@ -174,20 +190,37 @@
 		this.team = 1;
 		this.fired = currentGameTime;
 		this.speed = PIE_SPEED_X;
+		this.x = function() {
+			return parseInt($(this.node).css('left'));
+		};
+		this.y = function() {
+			return parseInt($(this.node).css('top'));
+		};
+		this.relativeX = function() {
+			var x = this.x();
+			if (this.team == 2) {
+				x = PLAYGROUND_WIDTH - x - PIE_WIDTH;
+			}
+			return x;
+		};
 		return true;
 	}
 
 	function gameTick() {
 
+		if (gameOver) {
+			return;
+		}
+
 		currentGameTime = new Date().getTime();
 
 		// Input player directions
-		p1_dir = p1_ai ? [0, 0] : translateKeysToDirection(["A", "S", "D", "W"]);
-		p2_dir = p2_ai ? [0, 0] : translateKeysToDirection(["J", "K", "L", "I"]);
+		p1_dir = inputMechanisms[p1_input].getDirections(player1, player2);
+		p2_dir = inputMechanisms[p2_input].getDirections(player2, player1);
 
 		// Input firing
-		p1_fire = p1_ai ? false : keyIsDown("F");
-		p2_fire = p2_ai ? false : keyIsDown("H");
+		p1_fire = inputMechanisms[p1_input].getFire(player1, player2);
+		p2_fire = inputMechanisms[p2_input].getFire(player2, player1);
 
 		// Update player positions
 		updateActorPosition($('#player1'), p1_dir, p1_bounds, PLAYER_SPEED_X, PLAYER_SPEED_Y);
@@ -418,6 +451,102 @@
 	});
 	
 	
+
+	var inputMechanisms = {
+		'human': {
+			getDirections: function(me, enemy) {
+				var dir;
+				if (me.team == 1) {
+					dir = translateKeysToDirection(["A", "S", "D", "W"]);
+				} else {
+					dir = translateKeysToDirection(["J", "K", "L", "I"]);
+				}
+				return dir;
+			},
+			getFire: function(me, enemy) {
+				if (me.team == 1) {
+					return keyIsDown("F");
+				} else {
+					return keyIsDown("H");
+				}
+			}
+		},
+		'easy_ai': {
+			getDirections: function(me, enemy) {
+				var dirX = 0, dirY = 0;
+				// Run away
+				if (me.y() < enemy.y()) {
+					dirY = -1;
+				} else if (me.y() > enemy.y()) {
+					dirY = 1;
+				} else {
+					// Run to center
+					if (me.y() > PLAYGROUND_HEIGHT / 2) {
+						dirY = -1;
+					} else {
+						dirY = 1;
+					}
+				}
+				// If enemy is shooting, run to back
+				if (enemy.pies.length) {
+					dirX = -1;
+				} else {
+					// Otherwise go to center of screen
+					if (me.relativeX() > PLAYGROUND_WIDTH / 4) {
+						dirX = 1;
+					} else if (me.relativeX() < PLAYGROUND_WIDTH / 4) {
+						dirX = -1;
+					} else {
+						dirX = 0;
+					}
+				}
+				if (me.team == 2) dirX *= -1;
+				return [dirX, dirY];
+			},
+			getFire: function(me, enemy) {
+				if (Math.random() < 0.02) {
+					return true;
+				}
+				return false;
+			}
+		},
+		'hard_ai': {
+			getDirections: function(me, enemy) {
+				var dirX = 0, dirY = 0;
+
+				// Run toward enemy
+				dirX = 1;
+				if (enemy.y() > me.y()) {
+					dirY = 1;
+				} else {
+					dirY = -1;
+				}
+
+				// Unless pie is in the air and may hit us
+				if (enemy.pies.length) {
+					var pieT = enemy.pies[0].y();
+					var pieB = pieT + PIE_HEIGHT;
+					var meT = me.y();
+					var meB = meT + PLAYER_HEIGHT;
+					if (pieB <= meT && pieT <= meB) {
+						// Run away!
+						if (pieT > meT) {
+							dirY = -1;
+						} else {
+							dirY = 1;
+						}
+					}
+				}
+
+				if (me.team == 2) dirX *= -1;
+				return [dirX, dirY];
+			},
+
+			getFire: function(me, enemy) {
+				return true;
+			}
+		}
+	};
 
 }())
 
