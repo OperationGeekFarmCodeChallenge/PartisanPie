@@ -31,7 +31,7 @@
 
 	var gameOver;
 	var winningTeam;
-	var p1_input = 'human', p2_input = 'hard_ai';
+	var p1_input = 'human', p2_input = 'easy_ai';
 	var player1, player2;
 	var player1name, player2name;
 	var p1anim, p2anim;
@@ -98,9 +98,20 @@
 			rate: ANIM_RATE,
 			type: $.gameQuery.ANIMATION_VERTICAL
 		};
-		a[1] = new $.gameQuery.Animation(animInfo);
+		a["team1_idle"] = new $.gameQuery.Animation(animInfo);
 		animInfo.imageURL = "img/flying_pie_right.png";
-		a[2] = new $.gameQuery.Animation(animInfo);
+		a["team2_idle"] = new $.gameQuery.Animation(animInfo);
+
+		var animInfoExplode = {
+			imageURL: "img/flying_pie_left_explode.png",
+			numberOfFrame: 4,
+			delta: 50,
+			rate: ANIM_RATE,
+			type: $.gameQuery.ANIMATION_VERTICAL | $.gameQuery.ANIMATION_CALLBACK
+		};
+		a["team1_explode"] = new $.gameQuery.Animation(animInfoExplode);
+		animInfoExplode.imageURL = "img/flying_pie_right_explode.png";
+		a["team2_explode"] = new $.gameQuery.Animation(animInfoExplode);
 		return a;
 	}
 
@@ -372,10 +383,8 @@
 		} else {
 			pieX -= PIE_WIDTH;
 		}
-		console.log("Firing pie for player on team " + p.team);
-		console.log(pieAnim[p.team]);
 		$('#team' + p.team + "pies").addSprite(pieId, {
-			animation: pieAnim[p.team],
+			animation: pieAnim["team" + p.team + "_idle"],
 			posx: pieX,
 			posy: pieY,
 			width: PIE_WIDTH,
