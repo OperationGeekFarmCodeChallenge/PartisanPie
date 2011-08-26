@@ -24,7 +24,7 @@
 	var PLAYER_SPEED_X = 4;
 	var PLAYER_SPEED_Y = 4;
 	var PIE_SPEED_X = 10;
-	var REFRESH_RATE = 15;
+	var REFRESH_RATE = 30;
 	var FIRE_RATE = 250;
 	var MAX_PIES_PER_PLAYER = 2;
 	var STARTING_HEALTH = 5;
