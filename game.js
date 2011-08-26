@@ -367,6 +367,10 @@
 			}
 		});
 	}
+	function capitaliseFirstLetter(string)
+	{
+    	return string.charAt(0).toUpperCase() + string.slice(1);
+	}
 
 	$(document).ready(function() {
 		var players = ["obama", "romney"];
@@ -376,7 +380,7 @@
 			function setPlayer(team, index) {
 				$('#playersChoice'+team).css('background-image', 'url(img/'+players[index]+'.png)');
 				$('#playersChoice'+team)[0].playerIndex = index;
-				$('#playersChoiceName'+team).html(players[index]);
+				$('#playersChoiceName'+team).html(capitaliseFirstLetter(players[index]));
 			}
 			
 			setPlayer(1, 1);
