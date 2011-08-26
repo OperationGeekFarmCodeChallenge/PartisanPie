@@ -159,13 +159,10 @@
 		pies[1] = new Array();
 		pies[2] = new Array();
 		pieCounter = 0;
-<<<<<<< HEAD
 		
 		//Initiaize Audio
 		chatterSound = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
-				
-=======
-
+		
 		//Initialize Audio
 		soundWrap = new $.gameQuery.SoundWrapper("audio/chatter.mp3",true); 
 		//Add sounds to which objects?
@@ -173,7 +170,6 @@
 		player1.pies = pies[1];
 		player2.pies = pies[2];
 
->>>>>>> 8e0ae3c21f70ea9eb251c8a07f3fdcdaf7e2e63b
 		// Display initial health counter
 		updateHealth();
 	}
