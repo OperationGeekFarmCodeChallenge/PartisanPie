@@ -175,10 +175,10 @@
 		pieCounter = 0;
 		
 		//Initiaize Audio
-		p1chatter = new $.gameQuery.SoundWrapper("audio/" + player1name + ".mp3", true);
-		p2chatter = new $.gameQuery.SoundWrapper("audio/" + player2name + ".mp3", true);
-		deathSound = new $.gameQuery.SoundWrapper("audio/death.mp3",false);
-		hitSound = new $.gameQuery.SoundWrapper("audio/ouch.mp3",false);
+		p1chatter = new $.gameQuery.SoundWrapper("audio/" + player1name + ".wav", true);
+		p2chatter = new $.gameQuery.SoundWrapper("audio/" + player2name + ".wav", true);
+		deathSound = new $.gameQuery.SoundWrapper("audio/death.wav",false);
+		hitSound = new $.gameQuery.SoundWrapper("audio/ouch.wav",false);
 		
 		player1.pies = pies[1];
 		player2.pies = pies[2];
